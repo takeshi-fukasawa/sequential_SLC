@@ -1,6 +1,7 @@
 % Estimates the Pesendorfer and Schmidt-Dengler (2008) model with
 % several sample sizes and values of c.
 clear all
+rng(0,'twister');
 
 nsims = 100;
 

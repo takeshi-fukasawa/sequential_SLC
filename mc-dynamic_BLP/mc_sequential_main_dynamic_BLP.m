@@ -1,8 +1,21 @@
+code_path='C:/Users/fukas/Dropbox/git/';
+run(append(code_path,'sequential_SLC_temp/addpath_preliminary.m'))
+
+run preliminary_set_params_dynamic_BLP.m
+
+save_spec=1;
+n_market=20;
+nstart=5;
+bad_init_val_spec=0;
+run_EPL_spec=0;
+SLC_line_search_spec=0;
+
 %% Run NFXP, SLC
 check_conv_to_same_param_spec=0;
 run_nfxp_spec=1;
 spectral_spec=0;
 SLC_tol=1e-6;
+
 run run_sequential_dynamic_BLP.m
 
 %% Run SLC(loose tolerance)

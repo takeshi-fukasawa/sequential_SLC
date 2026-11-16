@@ -8,7 +8,7 @@ function [out,other_vars]=...
     global y_cell_init z_cell_init
     global G_scaling_cell
     
-    rho_val=0.0;% Weight used in the EPL objective function; Currently set to 0
+    rho_val=0.0;% Weight used in the SLC objective function; Currently set to 0
 
     %% Step 0. Preliminary
     if isempty(k_iter)==1
@@ -153,7 +153,6 @@ function [out,other_vars]=...
         %'FinDiffType','central','FinDiffRelStep',1e-8,...
         %'TolFun',1e-8);
 
-
             if isempty(param_min)==1 & isempty(param_max)==1
                 try
                     [param_updated,fval,exitflag,output_opt]=...
@@ -162,11 +161,18 @@ function [out,other_vars]=...
                     x_k_temp_cell,y_k_temp_cell,z_k_temp_cell,other_input_obj_func0,...
                     Phi_func,other_input_Phi_func0,fixed_point_iter_spec,G_k_cell,rho_val,constraint_func);
                 catch
-                    param_updated=param_k*NaN;
+                    %param_updated=param_k*NaN;
+                    param_updated=param_k;
+                    "Error occurred in fminunc"
                     output_opt.funcCount=NaN;
                 end
             else%with upper/lower bounds
                 try
+                    if 1==0
+                        param_min=param_k*0.8;
+                        param_max=param_k*2.0;
+                    end
+
                     [param_updated,fval,exitflag,output_opt]=...
                         fmincon(@obj_func_SLC,param_k*1.0,[],[],[],[],...
                         param_min,param_max,[],...
@@ -175,14 +181,16 @@ function [out,other_vars]=...
                         x_k_temp_cell,y_k_temp_cell,z_k_temp_cell,other_input_obj_func0,...
                         Phi_func,other_input_Phi_func0,fixed_point_iter_spec,G_k_cell,rho_val,constraint_func);
                 catch
-                    param_updated=param_k*NaN;
+                    %param_updated=param_k*NaN;
+                    param_updated=param_k;
+                    "Error occurred in fmincon"
                     output_opt.funcCount=NaN;
                 end
             end
 
-           % if max(abs(param_updated-param_k))<1e-5
-           %     param_updated=param_k;
-           % end
+            if max(abs(param_updated-param_k))<1e-6%%%%%
+                %%param_updated=param_k;
+            end
 
            if isfield(opt_options,'GradObj')==1 && strcmp(opt_options.GradObj,'on')==1
                 count_obj_eval=count_obj_eval+(output_opt.funcCount);
@@ -200,6 +208,8 @@ function [out,other_vars]=...
         end
 
     %param_updated=param_k;%%%%
+
+    %param_updated(end)=max(param_updated(end),0.1);
 
     %% Step 2: Update x
     for m=1:n_vars

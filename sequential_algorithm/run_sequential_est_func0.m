@@ -1,5 +1,5 @@
 function [param_SLC,iter_info_SLC,X_sol_SLC,...
-    iter_info_x,other_vars,speed_test_info,results_nfxp]=...
+    iter_info_x,other_vars,speed_test_info,results_nfxp,results_EPL]=...
     run_sequential_est_func0(param_initial,varargin)
 
     
@@ -8,6 +8,7 @@ function [param_SLC,iter_info_SLC,X_sol_SLC,...
     global count_obj_eval
     global G_scaling_cell x_sol_cell
     global positive_param_nfxp_spec
+    global x_initial_cell_global
     
     n_vars_x=varargin{end};
     n_vars=n_vars_x;
@@ -77,6 +78,13 @@ end
          param_max=[];
     end
 
+if isfield(spec_sequential,'Newton_update_func')==1
+    spec_gmres.Newton_update_func=spec_sequential.Newton_update_func;
+end
+
+if isfield(spec_sequential,'run_EPL_spec')==0
+    spec_sequential.run_EPL_spec=0;
+end
 
 %% Solve x_initial
 spec=[];
@@ -284,7 +292,7 @@ spec.TOL=1e-12;
             %end
             
             if 1==0 & spec_sequential.run_nfxp==1 %% test: Start from NFXP solution
-                x_initial_cell=x_sol_cell;%%%%
+                x_initial_cell=x_initial_cell_global;%%%%
                 param_initial=param_nfxp*1.0;%%%%%
             end
             
@@ -293,7 +301,7 @@ spec.TOL=1e-12;
             end
 
             spec_SLC_algorithm.ITER_MAX=50;%100;%30;
-            %spec_SLC_algorithm.line_search_spec=1;
+            spec_SLC_algorithm.line_search_spec=spec_sequential.line_search_spec;
             %spec_SLC_algorithm.norm_spec=0;%%%%%
 
             if spectral_spec==0
@@ -312,6 +320,7 @@ spec.TOL=1e-12;
          %param_initial=param_initial*1;
          X_SLC_initial_cell={param_initial,x_initial_cell{:}};
 
+         %spectral_func_for_constrained_opt
          [X_sol_cell,other_vars,iter_info_SLC]=...
                 spectral_func_for_constrained_opt(@SLC_update_func,spec_SLC_algorithm,X_SLC_initial_cell,...
                 Phi_func,obj_func,...
@@ -325,7 +334,7 @@ spec.TOL=1e-12;
 
         iter_info_SLC.param_initial=X_SLC_initial_cell{1};
 
-        if 1==0
+        if spec_sequential.initial_x_solve_spec==1
             iter_info_SLC.t_cpu_sequential=iter_info_SLC.t_cpu;
             iter_info_SLC.t_cpu=iter_info_SLC.t_cpu+iter_info_x.t_cpu;
             iter_info_SLC.t_cpu_sol_x=iter_info_x.t_cpu;
@@ -336,5 +345,47 @@ spec.TOL=1e-12;
         [obj_val_SLC,~]=obj_func(param_SLC,X_sol_cell{2:end},other_input_obj_func{:});
 
         iter_info_SLC.obj_val=obj_val_SLC;
+
+    if spec_sequential.run_EPL_spec==1 % Run EPL algorithm
+        "EPL"
+
+        spec_EPL_algorithm=spec_SLC_algorithm;
+        spec_EPL_algorithm.ITER_MAX=50;
+        spec_EPL_algorithm.TOL=1e-6;%%%%
+
+        opt_options_EPL = optimset('FinDiffType','central','MaxIter',200,...
+            'Display','off','TolFun',1e-6,...
+            'TolX',1e-6,'FunValCheck','off',MaxFunEvals = 2000);
+        spec_EPL_algorithm.opt_options=opt_options_EPL;
+
+        y_cell_init=[];z_cell_init=[];
+
+         %x_initial_cell{1}=x_initial_cell{1}*0;
+         %param_initial=param_initial*1;
+         X_EPL_initial_cell={param_initial,x_initial_cell{:}};
+
+         [X_sol_cell,other_vars,iter_info_EPL]=...
+                spectral_func_for_constrained_opt(@EPL_update_func,spec_EPL_algorithm,X_EPL_initial_cell,...
+                Phi_func,obj_func,...
+                other_input_Phi_func,other_input_obj_func,spec_EPL_algorithm,n_vars);
+        param_EPL=X_sol_cell{1};
+
+        X_sol_EPL=X_sol_cell;
+
+        iter_info_EPL.count_obj_eval=count_obj_eval;
+        iter_info_EPL.count_G_eval=count_G_eval;
+
+        iter_info_EPL.param_initial=X_EPL_initial_cell{1};
+
+        [obj_val_EPL,~]=obj_func(param_EPL,X_sol_cell{2:end},other_input_obj_func{:});
+
+        iter_info_EPL.obj_val=obj_val_EPL;
+
+        results_EPL.iter_info_EPL=iter_info_EPL;
+        results_EPL.param_EPL=param_EPL;
+        
+    else
+        results_EPL=[];
+    end
 
 end

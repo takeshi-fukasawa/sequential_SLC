@@ -40,7 +40,7 @@ function [obj_val,grad]=obj_func_SLC(param,...
       
 
       rho_val_proximal=0.0;
-      obj_val=obj_val+rho_val_proximal*sum((param(:)-param_initial(:)).^2); % Now work well...
+      obj_val=obj_val+rho_val_proximal*sum((param(:)-param_initial(:)).^2);
 
       if rho_val>0
 
@@ -62,7 +62,6 @@ function [obj_val,grad]=obj_func_SLC(param,...
 
         %obj_val=obj_val+rho_val*sum(G_k_cell{1}(:).^2);
         %obj_val=obj_val+rho_val*sum(G_k_cell{1}(1).^2);
-        
 
       end
 

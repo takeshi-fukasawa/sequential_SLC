@@ -13,11 +13,14 @@ global VFI_spec
 
 warning('off', 'all')
 
-sequential_code_path='C:/Users/fukas/Dropbox/git/sequential/';
-run(append(sequential_code_path,'addpath_preliminary.m'))
+code_path='C:/Users/fukas/Dropbox/git/';
+run(append(code_path,'sequential_SLC_temp/addpath_preliminary.m'))
 
-addpath('./results')
-addpath('./unobs_hetero')
+
+
+addpath(append(sequential_code_path,'mc-dynamic-game-unobs-hetero/results'))
+addpath(append(sequential_code_path,'mc-dynamic-game-unobs-hetero/unobs_hetero'))
+
 
 save_spec=1;
 
@@ -39,7 +42,11 @@ end
 compute_jacobian_spec=1;
 krylov_spec=0;
 
-for mc_type_id=1:3
+run_EPL_spec=0;
+SLC_line_search_spec=0;
+bad_init_val_spec=0;
+
+for mc_type_id=1:5
     if mc_type_id==1
         nobs=6400;
         VFI_spec=0;

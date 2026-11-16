@@ -1,11 +1,9 @@
-run("C:/Users/fukas/Dropbox/git/sequential/addpath_preliminary.m")
-save_path="C:/Users/fukas/Dropbox/sequential/output/";
 
-
-sim_id_max=5;
+sim_id_max=6;
 for sim_id=1:sim_id_max
     if sim_id==1
         file_name=append(save_path,"dynamic_game_unobs_hetero_seq_results_6400_analytical_diff.mat");
+        nstart_base=nstart;
     elseif sim_id==2
         file_name=append(save_path,"dynamic_game_unobs_hetero_seq_results_numerical_diff.mat");
     elseif sim_id==3
@@ -14,8 +12,9 @@ for sim_id=1:sim_id_max
         file_name=append(save_path,"dynamic_game_unobs_hetero_seq_results_analytical_diff_EVFI.mat");
     elseif sim_id==5
         file_name=append(save_path,"dynamic_game_unobs_hetero_seq_results_numerical_diff_EVFI.mat");
+    elseif sim_id==6
+        file_name=append(save_path,"dynamic_game_unobs_hetero_seq_results_bad_init_6400_analytical_diff.mat");
     end
-
     load(file_name)
 
     if sim_id==1
@@ -122,3 +121,8 @@ table2=[param_diff_6400_SLC_numer;param_diff_6400_nfxp_numer;...
 table=[table,round(table2,8)];
 
 writematrix(table,append(save_path,"dynamic_game_unobs_hetero_table_comp_numer_diff_EVFI.csv"))
+
+%% Bad initial value comparison (Analytical derivatives)
+table=round([results_comp{1}(1,:);results_comp{6}(1,:)],1);
+table(1,1:2)=table(1,1:2)./nstart_base;% Show average time per starting value for the first row (SLC_spectral) to be consistent with the second row (SLC_spectral_bad_init) in terms of number of starting values.
+writematrix(table,append(save_path,"dynamic_game_unobs_hetero_table_comp_bad_init_6400_analytical_diff.csv"))

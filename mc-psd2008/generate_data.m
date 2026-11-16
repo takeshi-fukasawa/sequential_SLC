@@ -202,7 +202,6 @@ statedges=[0,statdist_CDF'];
 
 
 %generate data
-rng(0,'twister');
 
 %for sampling
 xdigi=(1:4);

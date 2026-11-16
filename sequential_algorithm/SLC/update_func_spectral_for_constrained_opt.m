@@ -17,7 +17,7 @@ x_max_cell,x_min_cell,k,obj_val_table)
 
     %%% Update variables
     if spec.line_search_spec==1
-       spec.ITER_MAX_LINE_SEARCH=5;%%%
+       spec.ITER_MAX_LINE_SEARCH=10;%%%
     else
         spec.ITER_MAX_LINE_SEARCH=1;
     end
@@ -76,11 +76,11 @@ x_max_cell,x_min_cell,k,obj_val_table)
             end
 
             eta_k=0.1/((1+k)^2)*n_d;%%%%%
+            %eta_k=100/((1+k)^2)*n_d;%%%%%
 
-            kappa_val=0.5;
             c_val=0;%%%%
             numer=obj_val_grad+c_val*d_norm^2;
-            denom=(1-kappa_val)*merit_val_vec_k(3)+eta_k;
+            denom=merit_val_vec_k(3)+eta_k;
             mu_val_k_plus_1=max(mu_val_k,numer/denom);
             
             %%%mu_val_k_plus_1=mu_val_k;%%%%%%%
@@ -96,8 +96,8 @@ x_max_cell,x_min_cell,k,obj_val_table)
 
             zeta_val=1e-4;
             if merit_val_vec_k_plus_1(1)>merit_val_k+...
-                zeta_val*step_size*spectral_coef_k{1}(1)*Delta_k+...
-                (1-zeta_val)*(1+mu_val_k_plus_1)*step_size*spectral_coef_k{1}(1)*eta_k
+                zeta_val*step_size(1)*spectral_coef_k{1}(1)*Delta_k+...
+                (1-zeta_val)*mu_val_k_plus_1*step_size(1)*spectral_coef_k{1}(1)*eta_k
                     continue_backtracking_dummy=1;
             else
                 continue_backtracking_dummy=0;    

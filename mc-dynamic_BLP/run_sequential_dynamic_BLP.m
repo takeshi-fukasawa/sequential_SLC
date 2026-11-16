@@ -1,16 +1,6 @@
-run preliminary_set_params_dynamic_BLP.m
 
 file_name_create_variables="create_variables_dynamic_BLP.m";
 
-
-save_path="C:/Users/fukas/Dropbox/sequential/output/";
-
-save_spec=1;
-n_market=20;
-
-%%run_nfxp_spec=1;%1;
-%%spectral_spec=0;
-nstart=5;
 
 n_param=3;
 n_sim=n_market;
@@ -25,6 +15,16 @@ if spectral_spec==1
 end
 if SLC_tol==1e-4
     file_name_save_variables=append(file_name_save_variables,"_SLC_loose_tol");
+end
+if nstart>=10
+    file_name_save_variables=append(file_name_save_variables,"_many_starting_values");
+end
+
+if bad_init_val_spec==1
+    file_name_save_variables=append(file_name_save_variables,"_bad_init");
+end
+if SLC_line_search_spec==1
+    file_name_save_variables=append(file_name_save_variables,"_line_search");
 end
 
 file_name_save_variables=append(file_name_save_variables,".mat");
@@ -74,6 +74,7 @@ market_id=1;
 
 for draw=1:n_sim%1:n_sim
     rng(100+draw);
+    
 
     %% Create other_input_Phi_func, other_input_obj_func, x_initial0_cell, Phi_func, obj_func, param_initial_all, param_min, param_max
 
@@ -87,12 +88,8 @@ for draw=1:n_sim%1:n_sim
     mu_ijt_est=mu_func(sigma_vec_est,v_est,X_jt);
     mu_ijt_est=reshape(mu_ijt_est,J,ns,G,T)./eps_sd;
 
-    %V_initial0=-log(S_0t_data.*weight);
-    delta_initial0=log(S_jt_data)-log(S_0t_data)-rho_est.*log(S_jt_given_g_data);% Initial value of delta
 
-
-    Pr0_initial0=ones(1,ns,1,T);
-
+    V_initial0=zeros(1,ns,1,n_dim_V);%1*ns*1*n_dim_V
     V_initial_global=V_initial0;
 
 
@@ -112,7 +109,7 @@ for draw=1:n_sim%1:n_sim
 
     param_min=param_true*0-5;
     param_max=param_true*0+5;
-    
+    param_max(3)=0.5;%%% Price: Large variation; Setting too large sigma_p => Numerically unstable...
 
     rho_val=0;
 
@@ -127,6 +124,9 @@ for draw=1:n_sim%1:n_sim
     spec_sequential.x_max_cell={param_max,[],[],[],[]};
     spec_sequential.SLC_positive_param_update_spec=SLC_positive_param_update_spec;
     spec_sequential.initial_x_solve_spec=initial_x_solve_spec;
+    spec_sequential.run_EPL_spec=run_EPL_spec;
+    spec_sequential.line_search_spec=SLC_line_search_spec;
+
     spec_sequential.TOL=SLC_tol;
 
     n_vars=size(x_initial0_cell,2);
@@ -137,9 +137,16 @@ for draw=1:n_sim%1:n_sim
 
     %% Random initial parameters
     sd=1;
-    sigma_const=sigma_const_true.*2.*sd.*rand(1,nstart);
-    sigma_x=sigma_x_true(:).*2.*sd.*rand(3,nstart);
-    sigma_p=sigma_p_true.*2.*sd.*rand(1,nstart);
+    if bad_init_val_spec==0
+        sigma_const=sigma_const_true.*2.*sd.*rand(1,nstart);
+        sigma_x=sigma_x_true(:).*2.*sd.*rand(3,nstart);
+        sigma_p=sigma_p_true.*1.5.*sd.*rand(1,nstart);
+    else%bad_init_val_spec==1
+        sigma_const=sigma_const_true.*3.*sd.*ones(1,nstart);
+        sigma_x=sigma_x_true(:).*3.*sd.*ones(3,nstart);
+        sigma_p=sigma_p_true.*1.5*sd.*ones(1,nstart);
+    end
+    
     sigma_vec_est=[sigma_const;sigma_x;sigma_p];%5*nstart
 
     for r=1:nstart

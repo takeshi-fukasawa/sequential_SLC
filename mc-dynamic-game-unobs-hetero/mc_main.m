@@ -13,26 +13,29 @@ global VFI_spec
 
 warning('off', 'all')
 
-sequential_code_path='C:/Users/fukas/Dropbox/git/sequential/';
-run(append(sequential_code_path,'addpath_preliminary.m'))
+code_path='C:/Users/fukas/Dropbox/git/';
+run(append(code_path,'sequential_SLC_temp/addpath_preliminary.m'))
 
-addpath('./results')
-addpath('./unobs_hetero')
 
-save_spec=1;
+addpath(append(sequential_code_path,'mc-dynamic-game-unobs-hetero/results'))
+addpath(append(sequential_code_path,'mc-dynamic-game-unobs-hetero/unobs_hetero'))
+
+save_spec=0;
 
 selexper=3;
 nobs=6400;
 %nobs=1600;
 unobs_hetero_spec=1;
 analytical_spec=1;% Use analytical derivatives
-nrepli = 20;%20;%1000  % Number of Monte carlo replications
+nrepli = 1;%20;%1000  % Number of Monte carlo replications
 nplayer = 3;    %  Number of players
 n_sim=nrepli;
-nstart_seq=5;
+nstart_seq=1;
 VFI_spec=0;
 spectral_spec=1;
 run_nfxp_spec=0;
+run_EPL_spec=0;
+SLC_line_search_spec=0;
 
 if unobs_hetero_spec==0
     multiple_zexo_spec=0;
@@ -43,6 +46,7 @@ end
 
 compute_jacobian_spec=1;
 krylov_spec=0;
+bad_init_val_spec=0;
 
 %%%%%%%%%%%
 obj_val_SLC_all=NaN(n_sim,nstart_seq);

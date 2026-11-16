@@ -14,8 +14,11 @@ else
     x_initial_cell=x_initial0_cell;
 end
 
-%%% Currently, we do not use hot start. Always start from x_initial0_cell, which is the initial guess specified by the user.
-x_initial_cell=x_initial0_cell;%%%%%
+hot_start_spec=1;
+if hot_start_spec==0 %Always start from x_initial0_cell, which is the initial guess specified by the user.
+    x_initial_cell=x_initial0_cell;%%%%%
+end
+
 n_vars=size(x_initial_cell,2);
 
 if isempty(spec)==1
@@ -68,13 +71,21 @@ end
     if nargout==1
         obj_val=obj_func(param,x_sol_cell{:},other_vars_obj_func{:});
 
-        if isnan(obj_val)==1
+        %obj_val
+        if isnan(obj_val)==1|isinf(obj_val)==1 | iter_info.n_iter==spec.ITER_MAX
             obj_val=1e+10;
+            x_initial_cell_global=[];
         end
 
     elseif nargout>=2 & isfield(spec,'compute_z_y_func')==1
         %% Analytically compute gradient
         [obj_val,dobj_dparam_direct,dobj_dX_cell]=obj_func(param,x_sol_cell{:},other_vars_obj_func{:});
+
+        %obj_val
+        if isnan(obj_val)==1|isinf(obj_val)==1 | iter_info.n_iter==spec.ITER_MAX
+            obj_val=1e+10;
+            x_initial_cell_global=[];
+        end
 
         compute_z_y_func=spec.compute_z_y_func;
         [y_cell]=compute_z_y_func(x_sol_cell{:},param,other_vars_Phi_func{:});
@@ -88,7 +99,7 @@ end
         end
 
 
-    elseif nargout>=2 & krylov_spec==1 % Compute gradient ny numerical derivatives
+    elseif nargout>=2 & krylov_spec==1 % Compute gradient by numerical derivatives
       Richardson_spec=0;
       fixed_point_iter_spec=1;%%%
       n_vars=size(x_initial_cell,1);

@@ -32,7 +32,6 @@ function [y_cell,z_cell,G_cell]=...
     u = zeros(n_state, kparam, nplayer, naction);
     fv = zeros(n_state, nplayer, naction);
     pchoice = zeros(n_state, nplayer);
-    pchoice_est = zeros(n_state, nplayer);
     ssurplus = zeros(n_state, nplayer);
     pchoice_dv = zeros(n_state, naction, naction, nplayer); % Derivative of Lambda(x,a,i) wrt v(x,a',i)
     
@@ -68,7 +67,6 @@ function [y_cell,z_cell,G_cell]=...
     for i = 1:nplayer
         vdiff = v(:,i,2) - v(:,i,1);
         expvdiff = exp(vdiff);
-        %pchoice(:,i) = expvdiff ./ (1 + expvdiff);
         ssurplus(:,i) = log(expvdiff + 1) + v(:,i,1) + eulerc;
 
         % Derivative of Lambda_^i(:,a^i=2) with respect to v^i(:,a^i=2)
@@ -339,9 +337,9 @@ function [y_cell,z_cell,G_cell]=...
         rhs_Gp = [ zeros(n_state-1,n_param-1),...
         -grad_psteady_1_updated,G_p];%n_psteady_1*(n_param+1)
     else
-        rhs_Gv = [ -uvec,-fv_grad_vec ];%n_v*(n_param+1)
+        rhs_Gv = [ -uvec,-fv_grad_vec ];%n_v*n_param
         rhs_Gp = [ zeros(n_state-1,n_param-1),...
-        -grad_psteady_1_updated];%n_psteady_1*(n_param+1)
+        -grad_psteady_1_updated];%n_psteady_1*n_param
     end
 
     %% Simultaneously solve several linear equations

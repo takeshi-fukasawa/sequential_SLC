@@ -1,7 +1,4 @@
-
-sequential_code_path='C:/Users/fukas/Dropbox/git/sequential/';
-BLP_algorithm_code_path='C:/Users/fukas/Dropbox/git/BLP_algorithm/';
-run(append(sequential_code_path,'addpath_preliminary.m'))
+BLP_algorithm_code_path=append(code_path,'BLP_algorithm/');
 
 addpath(append(BLP_algorithm_code_path,'static_dynamic_BLP_algorithm'))
 
@@ -15,12 +12,10 @@ global positive_param_nfxp_spec
 
 rng('default')
 
-run preliminary_path.m
 
-addpath('C:\Users\fukas\Dropbox\git\BLP_algorithm\static_dynamic_BLP_algorithm/functions')
-addpath('C:\Users\fukas\Dropbox\git\BLP_algorithm\static_dynamic_BLP_algorithm/run_dynamic')
-addpath('C:\Users\fukas\Dropbox\git\BLP_algorithm\static_dynamic_BLP_algorithm/run_static_dynamic')
-addpath(spectral_func_path)
+addpath(append(BLP_algorithm_code_path,'static_dynamic_BLP_algorithm/functions'))
+addpath(append(BLP_algorithm_code_path,'static_dynamic_BLP_algorithm/run_dynamic'))
+addpath(append(BLP_algorithm_code_path,'static_dynamic_BLP_algorithm/run_static_dynamic'))
 
 
 spec_default=[];

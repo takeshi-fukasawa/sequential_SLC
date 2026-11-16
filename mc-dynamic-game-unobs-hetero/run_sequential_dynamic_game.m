@@ -47,9 +47,15 @@ for i=1:T*nobs_temp
     dummy_xobs_obs(i,indobs_state_obs_temp(i))=1;
 end
 
-%dummy_xobs_obs=sparse(dummy_xobs_obs);
-
-
+if bad_init_val_spec==0
+   v_init=v;
+elseif bad_init_val_spec==1
+   %%v_init=zeros(size(v));
+   v_init=v;
+else% bad_init_val_spec==2
+   v_init=5.*ones(size(v));
+   %v_init=zeros(size(v));
+end
 
 if unobs_hetero_spec==0
     param_initial=theta;
@@ -59,7 +65,7 @@ if unobs_hetero_spec==0
     
         % Calculate initial choice probabilities
         for i = 1:nplayer
-            vdiff = v(:,i,2) - v(:,i,1);
+            vdiff = v_init(:,i,2) - v_init(:,i,1);
             expvdiff = exp(vdiff);
             pchoice(:,i) = expvdiff ./ (1 + expvdiff);
         end
@@ -70,7 +76,7 @@ if unobs_hetero_spec==0
         middle_vars_func=@compute_e_u_from_pchoice_func;
     elseif v_spec==1
        %%% Use the mapping on choice-specific value function
-        x_initial_cell={v};
+        x_initial_cell={v_init};
         Phi_func=@v_update_func;
         obj_func=@obj_func_given_v;
         middle_vars_func=@compute_e_u_from_v_func;
@@ -92,7 +98,7 @@ elseif unobs_hetero_spec==1
     psteady = (1/n_state) * ones(n_state, 1);
     psteady_1=psteady(1:end-1);
 
-    x_initial_cell={v,psteady_1};
+    x_initial_cell={v_init,psteady_1};
     Phi_func=@v_psteady_update_func;
     obj_func=@obj_func_given_v_psteady_unobs_hetero;
     
@@ -130,17 +136,27 @@ else
 end
 
 %spec_sequential.update_spec=0;
-%spec_sequential.line_search_spec=1;
+spec_sequential.line_search_spec=SLC_line_search_spec;
 spec_sequential.common_spectral_coef_spec=0;
 
+
 spec_sequential.compute_z_y_func=@compute_z_y_func_given_v_psteady;
-%spec_sequential.Newton_update_func=@compute_z_func_given_v_psteady_unobs_hetero;
+
+
+%spec_sequential.nfxp_Newton_spec=1;
+
 
 spec_sequential.analytical_spec=analytical_spec;%1;
 
+if spec_sequential.analytical_spec==1
+    spec_sequential.compute_Jac_func=@compute_Jac_func_given_v_psteady;
+    spec_sequential.compute_dG_dparam_func=@compute_dG_dparam_func_given_v_psteady;
+    spec_sequential.Newton_update_func=@compute_z_func_given_v_psteady_unobs_hetero;
+end
+
+
 spec_sequential.spectral_spec=spectral_spec;
 
-%spec_sequential.nfxp_Newton_spec=1;
 spec_sequential.nfxp_bhhh_spec=0;
 
 if spec_sequential.analytical_spec==1
@@ -149,7 +165,8 @@ end
 
 spec_sequential.initial_x_solve_spec=0; % If initial_x_solve_spec==1, solve for the initial x (e.g., value function) that is consistent with the initial parameter guess. 
 % If initial_x_solve_spec==0, use the initial x specified in x_initial0_cell without solving for consistency.
-
+spec_sequential.run_EPL_spec=run_EPL_spec;
+    
 %%spec_sequential.Anderson_acceleration=1;
 %spec_sequential.SQUAREM_spec=1;
 
@@ -163,7 +180,7 @@ end
 
 if unobs_hetero_spec==1 & 1==1
     param_min(end)=0.0;
-    param_max(end)=1.00;
+    param_max(end)=0.99;%1.00;
     param_min(nplayer+2)=0;% To uniquely identify the parameter
     param_min(end-2)=0;%% More competitors=> Smaller profit
 end
@@ -180,20 +197,30 @@ end
     spec_sequential.spec_x_update.ITER_MAX=1;
     spec_sequential.qNPL_spec=0;
     
-        
-%rho_val=0.1;
+    
 rho_val=0;
 %%save_spec=0;
 
 param_initial=param_initial(:);
 param_initial_all=param_initial;
-if nstart_seq>=2
-    param_initial_all=[param_initial_all,...
-        param_initial.*(0.5+rand(n_param,nstart_seq-1))];
-end
 
-param_initial_all(end,:)=rand(1,nstart_seq);
-param_initial_all(end-3,:)=2*rand(1,nstart_seq);
+if bad_init_val_spec==0
+    if nstart_seq>=2
+        param_initial_all=[param_initial_all,...
+            param_initial.*(0.5+rand(n_param,nstart_seq-1))];
+    end
+    
+    param_initial_all(end,:)=rand(1,nstart_seq);
+    param_initial_all(end-3,:)=2*rand(1,nstart_seq);
+elseif bad_init_val_spec==1
+    param_initial_all=param_initial.*3.*ones(n_param,nstart_seq);
+    param_initial_all(end,:)=0.1;
+    param_initial_all(end-3,:)=3;    
+else%bad_init_val_spec==2
+    param_initial_all=param_initial.*5.*ones(n_param,nstart_seq);
+    param_initial_all(end,:)=0.1;
+    param_initial_all(end-3,:)=5;
+end
 
 %if unobs_hetero_spec==1
 %    param_initial_all=3*rand(n_param,nstart_seq).*[theta_true(:);pi_param_true];
@@ -209,7 +236,7 @@ param_initial_all=max(min(param_initial_all,param_max(:)),param_min(:));
             param_nfxp_all=NaN(n_sim,nstart_seq,n_param);
         end
         [param_SLC_all(draw,r,:),iter_info_SLC ,X_sol_SLC{r},...
-        iter_info_x,other_vars,speed_test_info,results_nfxp]=...
+        iter_info_x,other_vars,speed_test_info,results_nfxp,results_EPL]=...
         run_sequential_est_func0(param_initial_all(:,r)*1.0,x_initial0_cell{:},Phi_func,obj_func,middle_vars_spec_cell,...
         other_input_Phi_func,other_input_obj_func,...
         rho_val,opt_options,spec_sequential,spec_gmres,n_vars);
@@ -219,7 +246,8 @@ param_initial_all=max(min(param_initial_all,param_max(:)),param_min(:));
         times_SLC_all(draw,r)=iter_info_SLC.t_cpu;
         count_G_eval_SLC_all(draw,r)=iter_info_SLC.count_G_eval;
         count_obj_eval_SLC_all(draw,r)=iter_info_SLC.count_obj_eval;
-        
+        iter_info_SLC_all{draw,r}=iter_info_SLC;
+
         if isempty(results_nfxp)==0
             param_nfxp_all(draw,r,:)=results_nfxp.param_nfxp;
 
@@ -234,11 +262,18 @@ param_initial_all=max(min(param_initial_all,param_max(:)),param_min(:));
     end% iteration wrt r
     
     if save_spec==1
-        save_path="C:/Users/fukas/Dropbox/sequential/output/";
         file_name=append(save_path,"dynamic_game_unobs_hetero_seq_results_");
+
+        if bad_init_val_spec==1
+            file_name=append(file_name,"bad_init_");
+        end
+        if SLC_line_search_spec==1
+            file_name=append(file_name,"line_search_");
+        end
+
         if analytical_spec==1 
             if VFI_spec==2
-                file_name=append(file_name,"_analytical_diff_EVFI.mat");
+                file_name=append(file_name,"analytical_diff_EVFI.mat");
             else
                 file_name=append(file_name,string(nobs),"_analytical_diff.mat");
             end
@@ -263,5 +298,5 @@ param_initial_all=max(min(param_initial_all,param_max(:)),param_min(:));
     end
     toc
 
-    temp="XXX"
+    %temp="XXX"
     

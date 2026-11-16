@@ -64,7 +64,7 @@ for k=0:ITER_MAX-1
    if quasi_newton_spec==0% JFNK update 
 
     if isfield(spec_gmres,'Newton_update_func')==1
-        [x_k_plus_1_cell,Delta_x_k_cell,F_k_vec,F_k_cell,other_vars]=Newton_update_func(...
+        [x_k_plus_1_cell,Delta_x_k_cell,F_k_vec,F_k_cell,other_vars]=spec_gmres.Newton_update_func(...
             x_k_cell{:},varargin{n_vars+3:end-3});
 
     else
