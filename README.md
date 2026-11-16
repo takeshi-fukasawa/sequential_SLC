@@ -12,6 +12,7 @@ Note that the code also relies on the following repositories:
 
 If you run the code, please also download these repositories, and modify the path appropriately.
 
+Other than the replication code for the numerical experiments, the repository also contains a folder named "auto_diff_comp_time_test", which includes code and documentation on the performance of automatic differentiation that is briefly discussed in the paper. For further details, please refer to the document "auto_diff_test_doc.pdf" contained in that folder.
 
 ## References
 * Dearing, A., & Blevins, J. R. (2025). Efficient and convergent sequential pseudo-likelihood estimation of dynamic discrete games. Review of Economic Studies, 92(2), 981-1021.
